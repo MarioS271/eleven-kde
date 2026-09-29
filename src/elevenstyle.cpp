@@ -1743,9 +1743,9 @@ void ElevenStyle::drawControl(ControlElement element, const QStyleOption *option
                 if (highContrastTheme) {
                     pen = QPen(newMbi.palette.highlight().color(), 2);
                     brush = newMbi.palette.window();
-                } else if (isPressed(&newMbi)) {
-                    brush = winUI3Color(subtlePressedColor);
-                } else if (isHover(&newMbi)) {
+                } else if (isPressed(&newMbi)) { // its menu is open
+                    brush = colorSchemeIndex == 1 ? QColor(0xFF, 0xFF, 0xFF, 40) : QColor(0x00, 0x00, 0x00, 30);
+                } else if (isHover(&newMbi) || newMbi.state.testFlag(State_Selected)) { // hover or keyboard focus
                     brush = winUI3Color(subtleHighlightColor);
                 }
                 if (pen != Qt::NoPen || brush != Qt::NoBrush) {
@@ -1755,7 +1755,13 @@ void ElevenStyle::drawControl(ControlElement element, const QStyleOption *option
             }
             newMbi.rect.adjust(hPadding,topPadding,-hPadding,-bottomPadding);
             painter->setFont(newMbi.font);
-            QProxyStyle::drawControl(element, &newMbi, painter, widget);
+            // Draw the label ourselves: Breeze's drawControl would paint its own (accent blue) highlight
+            // behind the active item on top of the gray one above.
+            int flags = Qt::AlignCenter | Qt::TextShowMnemonic | Qt::TextDontClip | Qt::TextSingleLine;
+            if (!proxy()->styleHint(SH_UnderlineShortcut, mbi, widget))
+                flags |= Qt::TextHideMnemonic;
+            proxy()->drawItemText(painter, newMbi.rect, flags, newMbi.palette, !isDisabled(&newMbi), newMbi.text,
+                                  QPalette::ButtonText);
         }
         break;
 
@@ -2744,9 +2750,15 @@ QBrush ElevenStyle::controlFillBrush(const QStyleOption *option, ControlType con
     // app, which made buttons follow the colour scheme's button colour instead of the WinUI translucent
     // gray fill.
 
-    // checked is the same for Control (Buttons) and Control Alt (Radiobuttons/Checkboxes)
-    if (isChecked(option))
+    if (isChecked(option)) {
+        // checked push/tool buttons are marked with a stronger gray fill, like every other highlight here;
+        // check boxes and radio buttons (Control Alt) keep the accent color
+        if (controlType == ControlType::Control)
+            return isDisabled(option) ? QBrush(Qt::NoBrush)
+                                      : QBrush(colorSchemeIndex == 1 ? QColor(0xFF, 0xFF, 0xFF, 64)
+                                                                     : winUI3Color(fillControlSecondary));
         return calculateAccentColor(option);
+    }
 
     const auto state = calcControlState(option);
     if (controlType == ControlType::Control && state == ControlState::Disabled)
