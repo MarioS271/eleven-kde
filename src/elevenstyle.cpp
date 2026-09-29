@@ -297,6 +297,16 @@ static constexpr std::array<std::array<QColor,34>, 2> WINUI3Colors {
     WINUI3ColorsDark
 };
 
+// Row highlight of item views: gray, stronger when selected than when only hovered. Qt's original switches to the
+// solid accent color for views with alternating row colors (e.g. Ark's file tree); that is not wanted here.
+static QColor itemRowHighlight(int colorScheme, bool selected)
+{
+    if (selected)
+        return colorScheme == 1 ? QColor(0xFF, 0xFF, 0xFF, 34) : QColor(0x00, 0x00, 0x00, 28);
+    return WINUI3Colors[colorScheme][subtleHighlightColor];
+}
+
+
 // Color of close Button in Titlebar (default + hover)
 static constexpr QColor shellCaptionCloseFillColorPrimary(0xC4,0x2B,0x1C,0xFF);
 static constexpr QColor shellCaptionCloseTextFillColorPrimary(0xFF,0xFF,0xFF,0xFF);
@@ -1206,8 +1216,7 @@ void ElevenStyle::drawPrimitive(PrimitiveElement element, const QStyleOption *op
                     isLast = !isLast;
                 }
 
-                const QAbstractItemView *view = qobject_cast<const QAbstractItemView *>(widget);
-                painter->setBrush(view->alternatingRowColors() ? vopt->palette.highlight() : WINUI3Colors[colorSchemeIndex][subtleHighlightColor]);
+                painter->setBrush(itemRowHighlight(colorSchemeIndex, vopt->state.testFlag(State_Selected)));
                 painter->setPen(Qt::NoPen);
                 if (isFirst) {
                     QPainterStateGuard psg(painter);
@@ -1974,10 +1983,7 @@ void ElevenStyle::drawControl(ControlElement element, const QStyleOption *option
                 if (highContrastTheme) {
                     painter->setBrush(vopt->palette.highlight());
                 } else {
-                    const QAbstractItemView *view = qobject_cast<const QAbstractItemView *>(widget);
-                    painter->setBrush(view && view->alternatingRowColors()
-                                              ? vopt->palette.highlight()
-                                              : winUI3Color(subtleHighlightColor));
+                    painter->setBrush(itemRowHighlight(colorSchemeIndex, vopt->state.testFlag(State_Selected)));
                 }
             } else {
                 painter->setBrush(vopt->backgroundBrush);
@@ -2553,6 +2559,43 @@ int ElevenStyle::pixelMetric(PixelMetric metric, const QStyleOption *option, con
 }
 
 namespace {
+// Delegate for combo box popup lists. Qt's own QComboBoxDelegate paints separators (insertSeparator) itself; the
+// styled delegate we swap in does not, which left separators as empty (and hoverable) rows.
+class ComboRowDelegate : public QStyledItemDelegate
+{
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+
+    void paint(QPainter *p, const QStyleOptionViewItem &option, const QModelIndex &index) const override
+    {
+        if (isSeparator(index)) {
+            QPainterStateGuard psg(p);
+            QColor line = option.palette.color(QPalette::Text);
+            line.setAlpha(46);
+            p->setPen(line);
+            const int y = option.rect.center().y();
+            p->drawLine(option.rect.left() + 8, y, option.rect.right() - 8, y);
+            return;
+        }
+        QStyledItemDelegate::paint(p, option, index);
+    }
+
+    QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override
+    {
+        if (isSeparator(index))
+            return QSize(1, 9);
+        return QStyledItemDelegate::sizeHint(option, index);
+    }
+
+private:
+    static bool isSeparator(const QModelIndex &index)
+    {
+        return index.data(Qt::AccessibleDescriptionRole).toString() == QLatin1String("separator");
+    }
+};
+}
+
+namespace {
 // setViewportMargins() is protected; expose it for the one widget class we pad.
 struct ScrollAreaAccess : QAbstractScrollArea
 {
@@ -2581,7 +2624,7 @@ void ElevenStyle::polish(QWidget* widget)
     if (auto *lv = qobject_cast<QListView *>(widget);
         lv && !qstrcmp(lv->metaObject()->className(), "QComboBoxListView")) {
         if (lv->itemDelegate() && !qstrcmp(lv->itemDelegate()->metaObject()->className(), "QItemDelegate"))
-            lv->setItemDelegate(new QStyledItemDelegate(lv));
+            lv->setItemDelegate(new ComboRowDelegate(lv));
         QPalette pal = lv->palette();
         QColor surface = pal.window().color();
         if (surface.lightness() < 128)

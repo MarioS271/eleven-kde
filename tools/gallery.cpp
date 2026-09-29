@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     auto *def = new QPushButton("Default"); def->setDefault(true); lay->addWidget(def, 1, 1);
     auto *cb = new QCheckBox("Check"); cb->setChecked(true); lay->addWidget(cb, 2, 0);
     lay->addWidget(new QRadioButton("Radio"), 2, 1);
-    auto *combo = new QComboBox; combo->addItems({"Eins", "Zwei"}); lay->addWidget(combo, 3, 0);
+    auto *combo = new QComboBox; combo->addItems({"Eins", "Zwei", "Drei"}); combo->insertSeparator(1); lay->addWidget(combo, 3, 0);
     auto *ecombo = new QComboBox; ecombo->setEditable(true); ecombo->addItems({"/home/marios271/", "/home/marios271/Desktop"}); lay->addWidget(ecombo, 3, 2, 1, 3);
     auto *spin = new QSpinBox; lay->addWidget(spin, 3, 1);
     lay->addWidget(new QLineEdit("Text"), 4, 0);
