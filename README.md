@@ -138,17 +138,21 @@ directories, install with `-DELEVEN_PLUGIN_DIR=$HOME/.local/lib/qt6/plugins` and
 
 ### Optional: QML overlay (System Settings and other QtQuick applications)
 
-KDE's Kirigami/QtQuick controls (switches, sidebar lists, combo box popups, tab buttons and network lists in System
-Settings) are drawn by QML with the color scheme or the Plasma theme and do not use the widget style. `qml/` mirrors the
-module paths it replaces:
+KDE's Kirigami/QtQuick controls (switches and list highlights in System Settings, for example the network list) are
+drawn by QML with the color scheme and do not use the widget style. `qml/` replaces two components of the
+`org.kde.desktop.private` module:
 
-| File                                                             | Change                                                                       |
-|------------------------------------------------------------------|------------------------------------------------------------------------------|
-| `org/kde/desktop/private/SwitchIndicator.qml`                    | WinUI toggle switch                                                          |
-| `org/kde/desktop/private/DefaultListItemBackground.qml`          | gray, borderless list highlight (QQC2 item delegates)                        |
-| `org/kde/desktop/MenuItem.qml`, `Menu.qml`                       | gray highlight, no accelerator underlines, no popup border, more right padding |
-| `org/kde/plasma/components/private/DefaultListItemBackground.qml` | gray list highlight instead of the Plasma theme's blue SVG element           |
-| `org/kde/kirigami/controls/NavigationTabButton.qml`              | gray selection and hover instead of accent fill and border                   |
+| File                                                    | Change                                                     |
+|---------------------------------------------------------|------------------------------------------------------------|
+| `org/kde/desktop/private/SwitchIndicator.qml`           | WinUI toggle switch                                        |
+| `org/kde/desktop/private/DefaultListItemBackground.qml` | gray, borderless list highlight for QQC2 item delegates    |
+
+Only this small submodule can be replaced reliably. Replacing the whole `org.kde.desktop` module (menu items, popups) or
+Kirigami's own modules was tried and does not work: System Settings then loads a second copy of the module from the
+QML that is compiled into the system libraries, and the compiled copy wins for most delegates (the network list turned
+blue again). Whatever is drawn by such compiled-in components (Kirigami's navigation tab buttons, QML menu and combo
+box popups in System Settings, info messages) keeps its blue highlight and its underlined accelerators. For the colors
+the main lever is the color scheme (accent and selection colors) of Plasma itself.
 
 To use them for your user:
 

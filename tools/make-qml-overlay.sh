@@ -2,7 +2,7 @@
 # Copyright (C) 2026 the eleven-kde authors (AI-assisted, see README.md)
 # SPDX-License-Identifier: LGPL-3.0-only
 #
-# Builds a QML overlay: copies the system QML modules listed below and puts the files of qml/ (same relative paths)
+# Builds a QML overlay: copies the system QML module(s) listed below and puts the files of qml/ (same relative paths)
 # over them.
 # Usage: make-qml-overlay.sh [output-dir]   (default: <project>/build/qml-overlay)
 # Use it with QML_IMPORT_PATH=<output-dir> (import paths win over the system modules).
@@ -10,7 +10,7 @@ set -e
 root=$(cd "$(dirname "$0")/.." && pwd)
 sysroot=/usr/lib/x86_64-linux-gnu/qt6/qml
 dest=${1:-$root/build/qml-overlay}
-modules="org/kde/desktop org/kde/plasma/components org/kde/kirigami/controls"
+modules="org/kde/desktop/private"
 
 rm -rf "$dest"
 for m in $modules; do
