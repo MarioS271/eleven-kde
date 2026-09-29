@@ -134,15 +134,25 @@ directories, install with `-DELEVEN_PLUGIN_DIR=$HOME/.local/lib/qt6/plugins` and
 
 ### Optional: QML overlay (System Settings and other QtQuick applications)
 
-KDE's Kirigami/QtQuick controls (switches, sidebar lists in System Settings) are drawn by QML with the color scheme
-and do not use the widget style. `qml/private/` contains replacements for two components of `org.kde.desktop.private`
-(a WinUI toggle switch, a gray borderless list highlight). To use them for your user:
+KDE's Kirigami/QtQuick controls (switches, sidebar lists, combo box popups, tab buttons and network lists in System
+Settings) are drawn by QML with the color scheme or the Plasma theme and do not use the widget style. `qml/` mirrors the
+module paths it replaces:
+
+| File                                                             | Change                                                                       |
+|------------------------------------------------------------------|------------------------------------------------------------------------------|
+| `org/kde/desktop/private/SwitchIndicator.qml`                    | WinUI toggle switch                                                          |
+| `org/kde/desktop/private/DefaultListItemBackground.qml`          | gray, borderless list highlight (QQC2 item delegates)                        |
+| `org/kde/desktop/MenuItem.qml`, `Menu.qml`                       | gray highlight, no accelerator underlines, no popup border, more right padding |
+| `org/kde/plasma/components/private/DefaultListItemBackground.qml` | gray list highlight instead of the Plasma theme's blue SVG element           |
+| `org/kde/kirigami/controls/NavigationTabButton.qml`              | gray selection and hover instead of accent fill and border                   |
+
+To use them for your user:
 
 ```
 tools/install-qml-overlay.sh
 ```
 
-This copies the system module to `~/.local/share/eleven-kde/qml-overlay`, swaps in the two files, and adds a
+This copies the system module to `~/.local/share/eleven-kde/qml-overlay`, swaps in the files from `qml/`, and adds a
 `QML_IMPORT_PATH` export for Plasma at login. Run it again after Plasma updates, because the overlay is a copy of
 system files. It applies to every QML application, not just System Settings.
 

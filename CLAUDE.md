@@ -67,9 +67,12 @@ Things that need several files or outside knowledge to understand:
 * **KDE custom style elements:** `KCapacityBar` asks the style for `"CE_CapacityBar"` through `styleHint(0xff000001)`
   and only does so if the style has `Q_CLASSINFO("X-KDE-CustomElements")`; `drawControl` answers with our own element id.
 * **QML/Kirigami is out of reach of the style.** Its colors come from the KDE color scheme, not `QPalette`, so palette
-  overrides do nothing there. `qml/private/*.qml` replace two components of `org.kde.desktop.private`; the overlay
-  works because `QML_IMPORT_PATH` beats the system path and `make-qml-overlay.sh` strips the `prefer` line of the
-  module's `qmldir` (otherwise the compiled-in QML wins). QQC2 CheckBox/RadioButton are `StyleItem`s that do call the
+  overrides do nothing there. `qml/org/...` mirrors the module paths of the QML files it replaces (`org.kde.desktop` incl. `private`,
+  `org.kde.plasma.components`, `org.kde.kirigami.controls`; see the table in the README). The overlay works because
+  `QML_IMPORT_PATH` beats the system path and `make-qml-overlay.sh` copies those whole system modules and strips the
+  `prefer` lines of their `qmldir` files (otherwise the compiled-in QML wins). Some lists take their look from the Plasma
+  theme SVGs (`widgets/listitem`), which is why the Plasma components background is replaced by a QML rectangle.
+  `QMLTEST_OUT=x.png build/qmltest` renders a QML window with popups to a PNG. QQC2 CheckBox/RadioButton are `StyleItem`s that do call the
   style, so `PE_IndicatorCheckBox` sizing (`PM_IndicatorWidth` 18, box 16) matters for clipping there.
 * **Qt private API:** the plugin links private symbols (`QStyleAnimation`, `QCachedPainter`, `QStyleHelper`) and
   includes private headers, so it is tied to the exact Qt build (6.10.2). Helpers copied from `QCommonStyle`
