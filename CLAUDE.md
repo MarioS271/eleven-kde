@@ -67,16 +67,20 @@ Things that need several files or outside knowledge to understand:
 * **KDE custom style elements:** `KCapacityBar` asks the style for `"CE_CapacityBar"` through `styleHint(0xff000001)`
   and only does so if the style has `Q_CLASSINFO("X-KDE-CustomElements")`; `drawControl` answers with our own element id.
 * **QML/Kirigami is out of reach of the style.** Its colors come from the KDE color scheme, not `QPalette`, so palette
-  overrides do nothing there. `qml/org/...` mirrors the module paths of the QML files it replaces, but only
-  `org.kde.desktop.private` (SwitchIndicator, DefaultListItemBackground) may be overlaid: `QML_IMPORT_PATH` beats the
-  system path and `make-qml-overlay.sh` copies the module and strips the `prefer` line of its `qmldir` (otherwise the
-  compiled-in QML wins). Do not overlay a whole module such as `org.kde.desktop`, `org.kde.plasma.components` or
-  `org.kde.kirigami.controls`: inside System Settings the engine then holds a second, resource-based copy of the module
-  (loaded by Kirigami's compiled-in QML), the overlay copy is ignored for most delegates, and it can even break
-  things that worked (the network list turned blue again). This only shows in System Settings itself, not in
-  `kcmshell6` or `build/qmltest`, so verify overlay changes with `systemsettings kcm_networkmanagement` (see the
-  import trace: `QML_IMPORT_TRACE=1`). Registering a Qt resource from the plugin does not help either (the compiled
-  QML units win). `QMLTEST_OUT=x.png build/qmltest` renders a QML window with popups to a PNG. QQC2 CheckBox/RadioButton are `StyleItem`s that do call the
+  overrides do nothing there. `qml/org/...` mirrors the module paths of the QML files it replaces and `make-qml-overlay.sh` copies
+  the whole system module `org.kde.desktop` and strips the `prefer` lines of its `qmldir` files (otherwise the
+  compiled-in QML wins); `QML_IMPORT_PATH` beats the system path. Kirigami's modules (`org.kde.kirigami.controls`, tab
+  buttons) and `org.kde.plasma.components` are deliberately not overlaid: overlaying them changed nothing useful or
+  broke other things. Caveat found the hard way: inside System Settings the engine also holds a resource-based copy of
+  `org.kde.desktop` (loaded by Kirigami's compiled-in QML), and for some pages the compiled delegates win over the
+  overlay (the network list turned blue). It only shows in System Settings itself, not in `kcmshell6` or
+  `build/qmltest`, so verify with `systemsettings <kcm>` and `QML_IMPORT_TRACE=1` (which URL does `QQC2.ItemDelegate`
+  resolve to?). The fix for the network page is `kcm/kcm_networkmanagement/qml/ConnectionItem.qml`: KCM QML is loaded
+  from `$XDG_DATA_HOME/kcm_networkmanagement/qml` before `/usr/share`, so `install-qml-overlay.sh` puts a copy of the page
+  there (marked with `.eleven-kde`, removed by the uninstall script). Registering a Qt resource from the plugin does not
+  help (compiled QML units win), neither does a color scheme (QML popups could be tinted with `DecorationFocus` alpha 0,
+  but that also changes focus outlines and the owner did not want a scheme). `QMLTEST_OUT=x.png build/qmltest` renders a
+  QML window with popups to a PNG. QQC2 CheckBox/RadioButton are `StyleItem`s that do call the
   style, so `PE_IndicatorCheckBox` sizing (`PM_IndicatorWidth` 18, box 16) matters for clipping there.
 * **Qt private API:** the plugin links private symbols (`QStyleAnimation`, `QCachedPainter`, `QStyleHelper`) and
   includes private headers, so it is tied to the exact Qt build (6.10.2). Helpers copied from `QCommonStyle`

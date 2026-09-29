@@ -4,7 +4,7 @@
 #
 # Removes everything eleven-kde put outside the source tree:
 #   - the style plugin (system Qt plugin directory and ~/.local/lib/qt6/plugins)
-#   - the QML overlay and its Plasma login environment script
+#   - the QML overlay, its Plasma login environment script and the network settings copy
 #   - the Application Style setting, if it still points to eleven-kde (switched back to Breeze)
 # Usage: tools/uninstall-eleven-kde.sh [--keep-style] [--dry-run]
 #   --keep-style   do not touch the Application Style setting
@@ -54,6 +54,9 @@ remove_file "$HOME/.local/lib/qt6/plugins/styles/eleven-kde.so"
 
 # --- QML overlay ---
 remove_dir "${XDG_DATA_HOME:-$HOME/.local/share}/eleven-kde"
+# the copy of the network settings page made by install-qml-overlay.sh (only if it is ours)
+kcm_copy=${XDG_DATA_HOME:-$HOME/.local/share}/kcm_networkmanagement
+[ -e "$kcm_copy/.eleven-kde" ] && remove_dir "$kcm_copy"
 remove_file "${XDG_CONFIG_HOME:-$HOME/.config}/plasma-workspace/env/eleven-kde-qml.sh"
 
 # --- Application Style setting ---

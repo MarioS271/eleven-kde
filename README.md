@@ -138,21 +138,26 @@ directories, install with `-DELEVEN_PLUGIN_DIR=$HOME/.local/lib/qt6/plugins` and
 
 ### Optional: QML overlay (System Settings and other QtQuick applications)
 
-KDE's Kirigami/QtQuick controls (switches and list highlights in System Settings, for example the network list) are
-drawn by QML with the color scheme and do not use the widget style. `qml/` replaces two components of the
-`org.kde.desktop.private` module:
+KDE's Kirigami/QtQuick controls (switches, list highlights, combo box popups in System Settings) are drawn by QML with
+the color scheme and do not use the widget style. `qml/` replaces four components of the `org.kde.desktop` module:
 
-| File                                                    | Change                                                     |
-|---------------------------------------------------------|------------------------------------------------------------|
-| `org/kde/desktop/private/SwitchIndicator.qml`           | WinUI toggle switch                                        |
-| `org/kde/desktop/private/DefaultListItemBackground.qml` | gray, borderless list highlight for QQC2 item delegates    |
+| File                                                    | Change                                                                   |
+|---------------------------------------------------------|--------------------------------------------------------------------------|
+| `org/kde/desktop/private/SwitchIndicator.qml`           | WinUI toggle switch                                                      |
+| `org/kde/desktop/private/DefaultListItemBackground.qml` | gray, borderless list highlight for QQC2 item delegates                  |
+| `org/kde/desktop/MenuItem.qml`, `Menu.qml`              | gray borderless popup highlight, no accelerator underlines, no popup border |
 
-Only this small submodule can be replaced reliably. Replacing the whole `org.kde.desktop` module (menu items, popups) or
-Kirigami's own modules was tried and does not work: System Settings then loads a second copy of the module from the
-QML that is compiled into the system libraries, and the compiled copy wins for most delegates (the network list turned
-blue again). Whatever is drawn by such compiled-in components (Kirigami's navigation tab buttons, QML menu and combo
-box popups in System Settings, info messages) keeps its blue highlight and its underlined accelerators. For the colors
-the main lever is the color scheme (accent and selection colors) of Plasma itself.
+The overlay is a copy of the whole system module with these files swapped in. Kirigami's own modules (tab buttons, info
+messages) and the Plasma components are left alone and keep their blue.
+
+**Limit:** System Settings also loads a second copy of `org.kde.desktop` from QML that is compiled into the system
+libraries, and for some pages (the network connection list is one) its delegates win over the overlay. For that page
+`kcm/kcm_networkmanagement/qml/ConnectionItem.qml` is a modified copy of the plasma-nm file, and
+`tools/install-qml-overlay.sh` installs it together with copies of the other files of that page to
+`~/.local/share/kcm_networkmanagement`, which System Settings prefers over the system copy. That copy is a snapshot
+from install time: after a plasma-nm update run the script again (or the page keeps the old code). Other pages whose
+lists are built from the compiled-in delegates may still show the blue highlight, and each would need the same kind of
+copy.
 
 To use them for your user:
 
@@ -160,7 +165,7 @@ To use them for your user:
 tools/install-qml-overlay.sh
 ```
 
-This copies the system module to `~/.local/share/eleven-kde/qml-overlay`, swaps in the files from `qml/`, and adds a
+This copies the system module to `~/.local/share/eleven-kde/qml-overlay`, swaps in the files from `qml/`, installs the network settings copy, and adds a
 `QML_IMPORT_PATH` export for Plasma at login. Run it again after Plasma updates, because the overlay is a copy of
 system files. It applies to every QML application, not just System Settings.
 

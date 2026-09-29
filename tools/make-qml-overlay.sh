@@ -10,7 +10,7 @@ set -e
 root=$(cd "$(dirname "$0")/.." && pwd)
 sysroot=/usr/lib/x86_64-linux-gnu/qt6/qml
 dest=${1:-$root/build/qml-overlay}
-modules="org/kde/desktop/private"
+modules="org/kde/desktop"
 
 rm -rf "$dest"
 for m in $modules; do
