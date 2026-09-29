@@ -5,6 +5,7 @@
 // QMLTEST_OUT=/tmp/x.png renders the window to a PNG and exits.
 // QT_QUICK_CONTROLS_STYLE=org.kde.desktop QML_IMPORT_PATH=build/qml-overlay QT_PLUGIN_PATH=build/plugins qmltest -style eleven-kde
 #include <QApplication>
+#include <QtQuickControls2/QQuickStyle>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QQuickItem>
@@ -14,6 +15,7 @@ int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
     QQmlApplicationEngine engine;
+    qInfo("Qt Quick Controls style: %s", qPrintable(QQuickStyle::name()));
     engine.loadData(R"(
 import QtQuick
 import QtQuick.Controls as QQC2
