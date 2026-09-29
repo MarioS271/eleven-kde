@@ -39,6 +39,31 @@ Known limitations:
 * Qt applications installed as Flatpak are not affected (see "Sandboxed applications").
 * No rounded corners where applications paint rectangles themselves.
 
+## Known issue: right click in Dolphin does nothing (KDE Connect hangs)
+
+After installing and logging in again, the context menu of files and folders in Dolphin may stop appearing. The author
+saw this every time this was set up, so expect it. The cause found so far is not the menu itself but **`kdeconnectd`**
+(KDE Connect): one of its threads spins at about 100 % CPU and the daemon stops answering on D-Bus. Dolphin asks it
+synchronously for the "send to device" entry, so the menu never opens.
+
+Check and fix it:
+
+```
+top -b -n1 | grep kdeconnectd                 # a hung daemon shows about 100 % CPU
+gdbus call --session --dest org.kde.kdeconnect --object-path /modules/kdeconnect \
+    --method org.kde.kdeconnect.daemon.devices false false     # should answer at once, not after a timeout
+pkill -x kdeconnectd                          # D-Bus starts a fresh one on demand
+```
+
+What is and is not known:
+
+* In one observed case the hung `kdeconnectd` had **never loaded this style** (it had been started while the style was
+  uninstalled), and a `kdeconnectd` that had loaded the style ran normally. So the style is not proven to be the cause,
+  and the hang may be a KDE Connect problem that only becomes visible around a fresh login. It was not investigated
+  further (a stack trace of the hung thread needs `sudo eu-stack -p <pid>` because of `ptrace_scope`).
+* The daemon may not hang on every setup. Do not rely on either statement without checking on your machine.
+* Avoiding it altogether: turn off the KDE Connect entry of Dolphin's context menu, or disable KDE Connect.
+
 ## Sandboxed applications (Flatpak, and probably Snap)
 
 **Qt applications installed as Flatpak do not use this style.** A Flatpak app runs inside a sandbox with the Qt and the
@@ -80,6 +105,23 @@ Settings) ignore the option and just raise the existing window, so close them fi
 
 ## Install
 
+The easy way installs everything: it builds if needed, installs the plugin (needs `sudo` once, only for that step),
+installs the optional QML overlay (see below) and sets the Application Style to eleven-kde. Each part can be switched
+off:
+
+```
+tools/install-eleven-kde.sh                     # plugin + QML overlay + Application Style
+tools/install-eleven-kde.sh --no-qml-overlay    # plugin + Application Style
+tools/install-eleven-kde.sh --no-style          # plugin + QML overlay, pick the style yourself in System Settings
+tools/install-eleven-kde.sh --no-style --no-qml-overlay   # plugin only
+tools/install-eleven-kde.sh --dry-run           # show what would be done, change nothing
+```
+
+Log out and in again afterwards (the QML overlay needs it, and it makes every running KDE service pick up the style).
+
+The manual steps behind it:
+
+
 Style plugin, system wide (needs root, uses the plugin directory of the Qt found by `qmake6`):
 
 ```
@@ -107,12 +149,19 @@ system files. It applies to every QML application, not just System Settings.
 ### Uninstall / recovery
 
 ```
-sudo rm /usr/lib/x86_64-linux-gnu/qt6/plugins/styles/eleven-kde.so
-rm -r ~/.local/share/eleven-kde ~/.config/plasma-workspace/env/eleven-kde-qml.sh
-kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle Breeze
+tools/uninstall-eleven-kde.sh --dry-run    # shows what would be removed
+tools/uninstall-eleven-kde.sh
 ```
 
-The last line switches back to Breeze from a terminal if a broken plugin makes the settings windows unusable.
+The script removes the style plugin (it uses `sudo` for the file in the system plugin directory only), the QML overlay
+and its login script, and switches the Application Style back to Breeze if it still points to eleven-kde. Log out and
+in afterwards.
+
+If a broken plugin makes the settings windows unusable, switch back to Breeze from a terminal:
+
+```
+kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle Breeze
+```
 
 ## Development
 
