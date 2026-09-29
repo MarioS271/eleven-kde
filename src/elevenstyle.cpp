@@ -2071,6 +2071,13 @@ int ElevenStyle::styleHint(StyleHint hint, const QStyleOption *opt,
     switch (hint) {
     case QStyle::SH_Menu_AllowActiveAndDisabled:
         return 0;
+    case QStyle::SH_UnderlineShortcut:
+        // no underlined keyboard accelerators in menus (context menus, menu bar, tray menus); other widgets keep
+        // whatever Breeze says
+        if ((opt && opt->type == QStyleOption::SO_MenuItem) || qobject_cast<const QMenu *>(widget)
+            || qobject_cast<const QMenuBar *>(widget))
+            return 0;
+        return QProxyStyle::styleHint(hint, opt, widget, returnData);
     case SH_GroupBox_TextLabelColor:
         if (opt!=nullptr && widget!=nullptr)
             return opt->palette.text().color().rgba();
@@ -2281,6 +2288,17 @@ QSize ElevenStyle::sizeFromContents(ContentsType type, const QStyleOption *optio
                                            const QSize &size, const QWidget *widget) const
 {
     QSize contentSize(size);
+
+    if (type == CT_TabBarTab) {
+        // taller tabs: the selected one is a floating pill with 3px of margin around it
+        contentSize = QProxyStyle::sizeFromContents(type, option, size, widget);
+        if (const auto *tab = qstyleoption_cast<const QStyleOptionTab *>(option)) {
+            const bool vertical = tab->shape == QTabBar::RoundedEast || tab->shape == QTabBar::RoundedWest
+                                  || tab->shape == QTabBar::TriangularEast || tab->shape == QTabBar::TriangularWest;
+            (vertical ? contentSize.rwidth() : contentSize.rheight()) += 10;
+        }
+        return contentSize;
+    }
 
     if (type == CT_ToolButton) {
         contentSize = QProxyStyle::sizeFromContents(type, option, size, widget);
@@ -2605,10 +2623,12 @@ struct ScrollAreaAccess : QAbstractScrollArea
 
 void ElevenStyle::polish(QWidget* widget)
 {
-    // Prism Launcher's instance list paints its selection itself with fillRect(palette Highlight) and a
+    // Prism Launcher's instance list and icon picker (both use its ListViewDelegate) paint the selection themselves with fillRect(palette Highlight) and a
     // Window-colored label box for unselected items, so the style can only change the palette it sees: a gray
     // translucent highlight instead of the solid accent, and a label box that blends into the list background.
-    if (auto *view = qobject_cast<QAbstractItemView *>(widget); view && view->inherits("InstanceView")) {
+    if (auto *view = qobject_cast<QAbstractItemView *>(widget);
+        view && (view->inherits("InstanceView")
+                 || (view->itemDelegate() && !qstrcmp(view->itemDelegate()->metaObject()->className(), "ListViewDelegate")))) {
         QPalette pal = view->palette();
         const bool dark = pal.window().color().lightness() < 128;
         pal.setColor(QPalette::Highlight, dark ? QColor(0xFF, 0xFF, 0xFF, 46) : QColor(0x00, 0x00, 0x00, 40));

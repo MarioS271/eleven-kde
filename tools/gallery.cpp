@@ -17,12 +17,12 @@ int main(int argc, char **argv)
 
     auto *menu = new QMenu(&w);
     auto *group = new QActionGroup(menu);
-    auto *view = menu->addAction(QIcon::fromTheme("view-list-icons"), "Symbole");
+    auto *view = menu->addAction(QIcon::fromTheme("view-list-icons"), "&Symbole");
     view->setCheckable(true); view->setChecked(true); group->addAction(view);
-    auto *details = menu->addAction(QIcon::fromTheme("view-list-details"), "Details");
+    auto *details = menu->addAction(QIcon::fromTheme("view-list-details"), "&Details");
     details->setCheckable(true); group->addAction(details);
     menu->addSeparator();
-    menu->addAction(QIcon::fromTheme("view-sort"), "Sortieren nach");
+    menu->addAction(QIcon::fromTheme("view-sort"), "Sortieren &nach");
     menu->addAction(QIcon::fromTheme("view-preview"), "Vorschau anzeigen")->setCheckable(true);
     menu->addAction(QIcon::fromTheme("view-hidden"), "Versteckte Dateien")->setCheckable(true);
 
@@ -71,6 +71,7 @@ int main(int argc, char **argv)
         for (QWidget *b : std::initializer_list<QWidget *>{plain, back, w.findChild<QPushButton *>()})
             b->setAttribute(Qt::WA_UnderMouse, true);
     }
+    if (qEnvironmentVariableIsSet("GALLERY_OUT")) QTimer::singleShot(100, [tabs] { qInfo("tab bar height: %d", tabs->tabBar()->height()); });
     w.resize(420, 480);
     w.show();
     if (const QByteArray out = qgetenv("GALLERY_OUT"); !out.isEmpty()) {
