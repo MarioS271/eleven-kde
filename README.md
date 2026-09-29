@@ -36,7 +36,28 @@ Known limitations:
   update with a different minor version, rebuild it. Whether Qt refuses or crashes on a mismatching plugin was not
   tested.
 * Anything drawn by the application itself with `fillRect`/QML colors ignores the style (see the QML overlay below).
+* Qt applications installed as Flatpak are not affected (see "Sandboxed applications").
 * No rounded corners where applications paint rectangles themselves.
+
+## Sandboxed applications (Flatpak, and probably Snap)
+
+**Qt applications installed as Flatpak do not use this style.** A Flatpak app runs inside a sandbox with the Qt and the
+Breeze style of its own runtime (for example `org.kde.Platform` 6.11), so:
+
+* the plugin installed on the host is not visible inside the sandbox, and
+* it would not load there anyway: it is built against the host's Qt and uses Qt private APIs, which must match the Qt
+  build of the application exactly.
+
+Such applications simply keep looking like Breeze. This was observed with Qalculate! (Qt) from Flathub. Flatpak apps
+that use GTK or Electron are not affected by a Qt style in the first place. Other bundled formats (Snap, AppImages that
+ship their own Qt) are expected to behave the same way but were not checked.
+
+Options, none of which is implemented here:
+
+* install the application natively (for example from your distribution) instead of as a Flatpak;
+* build the plugin once per Flatpak runtime version and provide it to the sandbox as a Flatpak extension (the way other
+  third-party Qt styles are distributed); whether the runtime SDKs contain the needed private Qt headers was not
+  verified.
 
 ## Build
 
