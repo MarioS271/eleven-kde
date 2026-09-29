@@ -6,12 +6,19 @@
 #   - the style plugin (system Qt plugin directory and ~/.local/lib/qt6/plugins)
 #   - the QML overlay and its Plasma login environment script
 #   - the Application Style setting, if it still points to eleven-kde (switched back to Breeze)
-# Usage: tools/uninstall-eleven-kde.sh [--dry-run]
+# Usage: tools/uninstall-eleven-kde.sh [--keep-style] [--dry-run]
+#   --keep-style   do not touch the Application Style setting
 # Removing the plugin from the system directory needs root; the script asks sudo only for that file.
 set -u
 
-dry=0
-[ "${1:-}" = "--dry-run" ] && dry=1
+dry=0; keep_style=0
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run) dry=1 ;;
+        --keep-style) keep_style=1 ;;
+        *) echo "unknown option: $arg" >&2; exit 2 ;;
+    esac
+done
 
 say() { printf '%s\n' "$*"; }
 run() {
@@ -50,7 +57,7 @@ remove_dir "${XDG_DATA_HOME:-$HOME/.local/share}/eleven-kde"
 remove_file "${XDG_CONFIG_HOME:-$HOME/.config}/plasma-workspace/env/eleven-kde-qml.sh"
 
 # --- Application Style setting ---
-if command -v kreadconfig6 >/dev/null 2>&1; then
+if [ "$keep_style" -eq 0 ] && command -v kreadconfig6 >/dev/null 2>&1; then
     current=$(kreadconfig6 --file kdeglobals --group KDE --key widgetStyle)
     if [ "$current" = "eleven-kde" ]; then
         say "Application Style is still eleven-kde, switching back to Breeze"

@@ -119,6 +119,10 @@ tools/install-eleven-kde.sh --dry-run           # show what would be done, chang
 
 Log out and in again afterwards (the QML overlay needs it, and it makes every running KDE service pick up the style).
 
+To update after changing the source, `tools/reinstall-eleven-kde.sh` runs the uninstall and the install script one after
+the other. It takes the same `--no-style`, `--no-qml-overlay` and `--dry-run` switches (`--no-style` also leaves your
+current Application Style alone during the uninstall step).
+
 The manual steps behind it:
 
 
@@ -161,6 +165,7 @@ system files. It applies to every QML application, not just System Settings.
 ```
 tools/uninstall-eleven-kde.sh --dry-run    # shows what would be removed
 tools/uninstall-eleven-kde.sh
+tools/uninstall-eleven-kde.sh --keep-style   # do not touch the Application Style setting
 ```
 
 The script removes the style plugin (it uses `sudo` for the file in the system plugin directory only), the QML overlay
