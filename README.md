@@ -8,6 +8,8 @@ gray hover highlights, thin accent underline on text fields, no blue focus recta
 > audited the code line by line, there is no test suite, and it was only looked at in a handful of applications
 > (see "Status"). It also depends on Qt private APIs. Use it at your own risk and expect rough edges.
 
+![Preview of eleven-kde](preview.png)
+
 ## What it is (and how it works)
 
 `eleven-kde` is a `QProxyStyle` that wraps Breeze. It is **not** a from-scratch style and **not** a Plasma global
