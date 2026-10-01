@@ -1639,6 +1639,9 @@ void ElevenStyle::drawControl(ControlElement element, const QStyleOption *option
             if (btn->features.testFlag(QStyleOptionButton::HasMenu)) {
                 QStyleOptionButton btnCopy(*btn);
                 btnCopy.rect = btn->rect.marginsRemoved(QMargins(contentHMargin, 0, contentHMargin, 0));
+                // the bevel already draws our chevron; without this Breeze adds its own arrow next to it
+                btnCopy.features &= ~QStyleOptionButton::HasMenu;
+                btnCopy.rect.setWidth(btnCopy.rect.width() - proxy()->pixelMetric(PM_MenuButtonIndicator, btn, widget));
                 btnCopy.palette.setBrush(QPalette::ButtonText, controlTextColor(option));
                 QProxyStyle::drawControl(element, &btnCopy, painter, widget);
                 break;
@@ -2710,7 +2713,10 @@ void ElevenStyle::polish(QWidget* widget)
                && !qobject_cast<QMdiArea *>(widget)
 #endif
         ) {
-        if (scrollarea->frameShape() == QFrame::StyledPanel) {
+        // Text edits keep their opaque viewport: the frame is not painted behind it, so without the fill the
+        // text underneath shows through (Dolphin's inline rename editor)
+        if (scrollarea->frameShape() == QFrame::StyledPanel && !qobject_cast<QTextEdit *>(widget)
+                && !qobject_cast<QPlainTextEdit *>(widget)) {
             const auto vp = scrollarea->viewport();
             const bool isAutoFillBackground = vp->autoFillBackground();
             const bool isStyledBackground = vp->testAttribute(Qt::WA_StyledBackground);
