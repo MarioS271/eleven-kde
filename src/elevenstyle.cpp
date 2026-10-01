@@ -825,7 +825,6 @@ void ElevenStyle::drawComplexControl(ComplexControl control, const QStyleOptionC
 void ElevenStyle::drawPrimitive(PrimitiveElement element, const QStyleOption *option,
                                     QPainter *painter,
                                     const QWidget *widget) const {
-
     const State state = option->state;
     QPainterStateGuard psg(painter);
     painter->setRenderHint(QPainter::Antialiasing);
@@ -1704,6 +1703,15 @@ void ElevenStyle::drawControl(ControlElement element, const QStyleOption *option
                     painter->setBrush(WINUI3Colors[colorSchemeIndex][subtleHighlightColor]);
                 }
                 painter->drawRoundedRect(rect, secondLevelRoundingRadius, secondLevelRoundingRadius);
+            } else if (widget && widget->inherits("PartWidget")) {
+                // KDE Partition Manager's partition bar is a row of push buttons whose palette Button color is the
+                // file system color; the neutral control fill would turn every partition gray.
+                painter->setBrush(btn->palette.button());
+                painter->drawRoundedRect(rect, secondLevelRoundingRadius, secondLevelRoundingRadius);
+                if (flags & State_MouseOver) {
+                    painter->setBrush(WINUI3Colors[colorSchemeIndex][subtleHighlightColor]);
+                    painter->drawRoundedRect(rect, secondLevelRoundingRadius, secondLevelRoundingRadius);
+                }
             } else {
                 painter->setBrush(controlFillBrush(option, ControlType::Control));
                 painter->drawRoundedRect(rect, secondLevelRoundingRadius, secondLevelRoundingRadius);
